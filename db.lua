@@ -15,8 +15,11 @@ function db.call(name, arg)
   pg:keepalive()
   pg = nil
 
-  -- TODO make this nil-safe
-  return cjson.encode(result[1][name]), err, partial, num_queries
+  if result ~= nil then
+    result = cjson.encode(result[1][name])
+  end
+
+  return result, err, partial, num_queries
 end
 
 function db.select(name, arg)
@@ -30,8 +33,11 @@ function db.select(name, arg)
   pg:keepalive()
   pg = nil
 
-  -- TODO make this nil-safe
-  return cjson.encode(result[1][name]), err, partial, num_queries
+  if result ~= nil then
+    result = cjson.encode(result[1][name])
+  end
+
+  return result, err, partial, num_queries
 end
 
 return db
