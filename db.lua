@@ -27,7 +27,7 @@ function db.select(name, arg)
 
   assert(pg:connect())
   result, err, partial, num_queries = pg:query(
-    "SELECT * FROM " .. name .. "(" .. pg:escape_literal(arg) .. ");"
+    "SELECT " .. name .. "(" .. pg:escape_literal(arg) .. ");"
   )
 
   pg:keepalive()
