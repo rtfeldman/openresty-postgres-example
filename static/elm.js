@@ -6410,7 +6410,10 @@ var elm$url$Url$Builder$relative = F2(
 var author$project$Api$Endpoint$url = F2(
 	function (paths, queryParams) {
 		return author$project$Api$Endpoint$Endpoint(
-			A2(elm$url$Url$Builder$relative, paths, queryParams));
+			A2(
+				elm$url$Url$Builder$relative,
+				A2(elm$core$List$cons, 'api', paths),
+				queryParams));
 	});
 var author$project$Article$Slug$toString = function (_n0) {
 	var str = _n0.a;
