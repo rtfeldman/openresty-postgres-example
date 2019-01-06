@@ -1,25 +1,25 @@
 local pgmoon = require("pgmoon")
-local cjson = require("cjson")
 local db_credentials = require("db_credentials")
+local ngx = ngx
 
 local db = {}
 
-function db.call(name, arg)
-  local pg = pgmoon.new(db_credentials)
+function decode_resp(resp)
+  -- Example resp: '(200,"{\"errors\": []}")'
+  
+  local first_comma_index = string.find(resp, ',')
 
-  assert(pg:connect())
-  result, err, partial, num_queries = pg:query(
-    "CALL " .. name .. "(" .. pg:escape_literal(arg) .. ");"
-  )
-
-  pg:keepalive()
-  pg = nil
-
-  if result ~= nil then
-    result = cjson.encode(result[1][name])
+  if first_comma_index == nil then
+    return 500, nil
   end
 
-  return result, err, partial, num_queries
+  local status_code = tonumber(string.sub(resp, 2, first_comma_index - 1))
+  local unescaped_json = string.sub(resp, first_comma_index + 2, string.len(resp) - 2)
+
+  -- JSON strings end up being double-quoted, e.g. ""user"": {""email"": ... }
+  local escaped_json = string.gsub(unescaped_json, "\"\"", "\"")
+  
+  return status_code, escaped_json
 end
 
 function db.select(name, arg)
@@ -33,11 +33,31 @@ function db.select(name, arg)
   pg:keepalive()
   pg = nil
 
-  if result ~= nil then
-    result = cjson.encode(result[1][name])
+  if result == nil then
+    return 500, nil, err, partial, num_queries 
   end
 
-  return result, err, partial, num_queries
+  status_code, json = decode_resp(result[1][name])
+
+  return status_code, json, err, partial, num_queries
+end
+
+function db.post(name)
+  ngx.req.read_body()
+
+  return db.respond(name, ngx.req.get_body_data())
+end
+
+function db.respond(name, arg)
+  status_code, json, err, partial, num_queries = db.select(name, arg)
+
+  ngx.status = status_code
+
+  if json ~= nil then
+    ngx.print(json)
+  end
+
+  return ngx.exit(ngx.OK)
 end
 
 return db
