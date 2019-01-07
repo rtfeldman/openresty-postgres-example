@@ -43,9 +43,23 @@ function db.select(name, arg)
 end
 
 function db.post(name)
+  if ngx.req.get_method() ~= "POST" then
+    ngx.status = 404
+    return ngx.exit(404)
+  end
+
   ngx.req.read_body()
 
   return db.respond(name, ngx.req.get_body_data())
+end
+
+function db.get(name, arg)
+  if ngx.req.get_method() ~= "GET" then
+    ngx.status = 404
+    return ngx.exit(404)
+  end
+
+  return db.respond(name, arg)
 end
 
 function db.respond(name, arg)

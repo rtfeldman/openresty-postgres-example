@@ -1,3 +1,27 @@
+CREATE OR REPLACE FUNCTION get_profile(uname text, OUT status_code smallint, OUT resp text)
+AS $$
+DECLARE
+    usr RECORD;
+BEGIN
+    SELECT "username", "bio", "image", FALSE AS "following" INTO usr
+        FROM public.user AS u
+        WHERE u.username = uname;
+
+    SELECT (
+      CASE WHEN usr IS NULL THEN
+        404
+      ELSE
+        200
+      END
+    ) INTO status_code;
+
+    SELECT (SELECT row_to_json(prof) 
+        FROM (SELECT to_json(usr) AS "profile") prof
+      ) INTO resp;
+END;
+
+
+$$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION new_session(uid bigint) RETURNS json
 AS $$
 DECLARE
